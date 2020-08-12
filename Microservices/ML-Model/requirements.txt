@@ -1,0 +1,11 @@
+pandas==0.25.3
+uvicorn==0.11.5
+fastapi==0.59.0
+pydantic==1.6
+streamlit==0.57.1
+numpy==1.18.2
+scikit-image==0.15.0
+scikit-learn==0.22.1
+matplotlib==3.1.1
+gensim==3.8.3
+gunicorn
