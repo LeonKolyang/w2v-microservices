@@ -1,9 +1,11 @@
+pandas==0.25.3
+uvicorn==0.11.5
+fastapi==0.59.0
+pydantic==1.6
 streamlit==0.57.1
 numpy==1.18.2
-pandas==0.25.3
+scikit-image==0.15.0
+scikit-learn==0.22.1
 matplotlib==3.1.1
-pymongo==3.10.1
-google-cloud-pubsub==1.1.0
-requests
-google-cloud-firestore
-google-cloud-storage
+gensim==3.8.3
+gunicorn
