@@ -1,26 +1,35 @@
 import gensim.models
 import pandas as pd
 import streamlit as st
+import sys
 
 from sklearn.decomposition import IncrementalPCA    # inital reduction
 from sklearn.manifold import TSNE                   # final reduction
 import numpy as np                                  # array handling
 import matplotlib.pyplot as plt
 
+# class for the word2vec model
+# handles the incoming data and wraps the gensim word2vec implementation into the service
+
 class W2V():
     def __init__(self):
-        self.zutatenverzeichnis = pd.DataFrame()
+        # input words
+        self.zutatenverzeichnis = pd.DataFrame() 
 
+        # model parameters
         self.iterations = None
         self.window_size = None
         self.dimensions = None
         self.min = None
         self.neg = None
 
+        # midcalculation result
         self.sentences = []
 
+        # model result
         self.word_vectors = None
 
+        # modelinstance
         self.MODEL = None
 
     def load_data(self, data):
@@ -34,14 +43,16 @@ class W2V():
     def load_parameters(self, parameter_list):
         for parameter in parameter_list:
             self.__dict__[parameter["parameter"]] = int(parameter["value"])
-
+    
+    # wrapper for the gensim word2vec model training
+    # stores the result in the modelinstance
     def run(self):
         self.sentences = self.buildSentences()
         word_vectors = self.train_model(self.sentences, self.iterations, self.window_size, self.dimensions, self.min, self.neg)
         self.word_vectors = self.get_vectors()
 
+    # calculates the word vectors for a given phrase in a trained model
     def add_new_phrase(self, new_phrase):
-        
         model = self.MODEL
         model.build_vocab([new_phrase], update=True)
         model.train(new_phrase, total_examples=model.corpus_count, epochs=model.iter)
@@ -54,14 +65,18 @@ class W2V():
         
         return evaluated
 
+    # saves model as file on the server
     def save(self):
         model = self.MODEL
         model.save("word2vec.model")
 
+    # loads a saved file from the server
     def load_old(self):
-        self.MODEL = gensim.models.Word2Vec.load("word2vec.model")
-        self.word_vectors = self.get_vectors()
-
+        try: 
+            self.MODEL = gensim.models.Word2Vec.load("word2vec.model")
+            self.word_vectors = self.get_vectors()
+        except Exception as e:
+            sys.stdout.write(str(e))
 
     def get_result(self, result):
         return self.word_vectors
@@ -80,7 +95,7 @@ class W2V():
         return description
 
 
-    # Baue aus dem Zutatenverzeichnis die Sätze
+    # build sentences from the zutatenverzeichnis (given words)
     def buildSentences(self):
         sentences = []
         for index, row in self.zutatenverzeichnis.iterrows():
@@ -96,11 +111,10 @@ class W2V():
         #        break
 
     def train_model(self, sentences, no_iterations, window_size, dimensions, min, neg, *args):
-        #Aufruf des Trainings desWord2Vec Algorithmus mit den in der Arbeit beschriebenen Parametern
         self.MODEL = gensim.models.Word2Vec(sentences, sg=1,min_count=min, size= dimensions, negative=neg, iter=no_iterations, window=window_size)
 
 
-    # gensim implementierung des scikit-learn Dimensionsreduzieren
+    # gensim implementation of scikit-learn dimensionreduction
     def reduce_dimensions(self, MODEL):
         num_dimensions = 2  # final num dimensions (2D, 3D, etc)
 
@@ -123,10 +137,9 @@ class W2V():
         y_vals = [v[1] for v in vectors]
         return x_vals, y_vals, labels
 
+    # reduce calculated word vectors on a two dimensional plane
     def get_vectors(self):
-        #Reduzierung der Dimensionen
         x_vals, y_vals, labels = self.reduce_dimensions(self.MODEL)
-        #Speichere die finalen Wordembeddings als .csv Datei ab
         vectors = pd.DataFrame({"x":x_vals,"y" :y_vals,"labels":labels})
         return vectors
 

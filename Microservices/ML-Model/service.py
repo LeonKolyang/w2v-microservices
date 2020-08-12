@@ -3,6 +3,9 @@ import w2v_gensim
 import clustering
 import sys
 
+# central handler for model instances
+# can only hold one instance per model
+# passes the methods to the selected model
 class ModelHandler:
     def __init__(self):     
         self.models = {"word2vec": None,
@@ -32,6 +35,8 @@ class ModelHandler:
         model = self.models[model]
         model.run()
     
+    # data exchange for the phrase evaluation between the word2vec and the clustering model is done by the modelhandler
+    # the modelhandler merges the data of both models with the given phrase to return a result
     def evaluate_new_phrase(self, model, data):
         sys.stdout.write(str(id(self)))
         sys.stdout.write(str(self.models))

@@ -10,18 +10,24 @@ import streamlit as st
 import service
 import exceptions
 
+# Entry point for the machine learning preprocessing
+
+# Basemodel for a single ingredient
 class Dataset(BaseModel):
     amount: Optional [str] = None
     name:   str
     unit:   Optional [str] = None
 
+# Basemodel for the manually selected ingredients to perform training on the data
 class Ingredients(BaseModel):
     name:   str
 
 app = FastAPI()
 
+# preprocessor instances get loaded directly into the main application and can be accessed from here
 preprocessor_instances = []
 
+# get ids of actvie preprocessors
 @app.get("/get_active_preprocessors/")
 def get_active_processors():
     if preprocessor_instances: 
@@ -29,6 +35,8 @@ def get_active_processors():
     else:
         return None
 
+# create a new preprocessor
+# a dataset is required
 @app.post("/create_preprocessor/")
 def create_preprocessor(dataset: List[Dataset]):
     prep_id = len(preprocessor_instances)
@@ -39,6 +47,7 @@ def create_preprocessor(dataset: List[Dataset]):
     preprocessor_instances.append(preprocessor)
     return preprocessor.prep_id
 
+# returns the dataset of a selected preprocessor
 @app.get("/get_dataset/{prep_id}")
 def get_dataset(prep_id):
     prep_id = int(prep_id)
@@ -50,6 +59,7 @@ def get_dataset(prep_id):
     dataset_json = dataset.to_json(orient='records')  
     return dataset_json
 
+# load the manually selected ingredients to match them with the dataset
 @app.put("/load_ingredients/{prep_id}")
 def load_ingredients(prep_id, ingredients: List[Ingredients]):
     prep_id = int(prep_id)
@@ -62,6 +72,7 @@ def load_ingredients(prep_id, ingredients: List[Ingredients]):
     preprocessor.load_ingredients(ingredients_df)
     return preprocessor.prep_id
 
+# returns the loaded ingredient list
 @app.get("/get_ingredients/{prep_id}")
 def get_ingredients(prep_id):
     prep_id = int(prep_id)
@@ -73,6 +84,7 @@ def get_ingredients(prep_id):
     ingredients_json = ingredients.to_json(orient='records')  
     return ingredients_json
 
+# runs the preprocessing steps defined in the preprocessing class
 @app.put("/run_preprocessing/{prep_id}")
 def run_preprocessing(prep_id):
     prep_id = int(prep_id)
@@ -83,6 +95,8 @@ def run_preprocessing(prep_id):
     preprocessor.preprocess(preprocessor.dataset, preprocessor.ingredients)
     return preprocessor.prep_id
 
+# returns the result of a finished preprocessing task
+# attribute is either one of processed data, corpus, zutatenverzeichnis or stemmed ingredients
 @app.get("/get_result/{prep_id}/{attribute}")
 def get_corpus(prep_id, attribute):
     prep_id = int(prep_id)
@@ -94,7 +108,7 @@ def get_corpus(prep_id, attribute):
     return result_json
 
 
-
+# helpfunction to determine the missing attributes of a preprocessor or if it is even existent
 def get_preprocessor(prep_id, attributes):
     try:
         preprocessor = preprocessor_instances[prep_id]

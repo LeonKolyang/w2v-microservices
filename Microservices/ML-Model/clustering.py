@@ -7,19 +7,29 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 
+
+# class for the clustering model
+# handles the incoming data and wraps the scikit-learn implementation into the service
+
 class Clustering:
     def __init__(self):
+        # input data
         self.word_vectors = pd.DataFrame()
         self.ingredients = pd.DataFrame()
 
+        # model parameter
         self.no_clusters = None
 
+        # model result
         self.clustered_word_vectors = None
         self.cluster_reinheit = None
 
+        # modelinstance
         self.MODEL = None
         
-
+    # wrapper for the scikit-learn k-means clustering
+    # assigns every word to a cluster and calculates the reinheit (pureness) of a cluster
+    # stores the result in the modelinstance
     def run(self):
         cluster_data = self.word_vectors
         self.MODEL = KMeans(n_clusters = self.no_clusters, random_state=0)
@@ -62,6 +72,7 @@ class Clustering:
                         "no_clusters": self.no_clusters}
         return description
 
+    # calculates the reinheit (pureness) of a cluster, to determine, how high the probability of a "Bezeichnung" in a cluster is
     def calculate_reinheit(self):
         clusterlist = self.clustered_word_vectors["cluster"].unique()
         toplist = self.ingredients

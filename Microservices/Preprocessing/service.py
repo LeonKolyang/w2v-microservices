@@ -5,14 +5,21 @@ import copy
 class Preprocessor:
     def __init__(self, prep_id):
         self.prep_id = prep_id
+        
+        # input data
         self.dataset = None
         self.ingredients = None
 
+        # midcalculation result
         self.processed_data = None
+
+        # preprocessing results
         self.corpus = None
         self.zutatenverzeichnis = None
         self.stemmed_ingredients = None
 
+        # list of forbidden signs for the stemmer
+        # TODO: implement function to alternate list
         self.sign_list = [",", "(", ")", "/", ".", "+","\"", ":","-","„","“","&"]
 
     def load_dataset(self, dataset):
@@ -24,6 +31,7 @@ class Preprocessor:
         self.ingredients = ingredients
         return self.ingredients
 
+    # TODO: cleanup get methods
     def get_corpus(self):
         return self.corpus
 
@@ -46,6 +54,7 @@ class Preprocessor:
         attribute = self.__dict__[attribute]
         return attribute
 
+    # drop duplicates and sort a dataframe
     def reduce_duplicates(self, data_in=None, column = "name"):
         data = self.processed_data if data_in is None else data_in 
         data = data.sort_values(column)
@@ -53,6 +62,7 @@ class Preprocessor:
         if data_in is None: self.processed_data = data
         return data
 
+    # helperfunction to match the selected ingredients with the dataset
     def match_helper(self, row, ingredients):
         list_row = row["name"].split(" ")
         ing_list = []
@@ -61,6 +71,7 @@ class Preprocessor:
                 ing_list.append(word)
         return ing_list
 
+    # wrapper for the match_helper function
     def match_ingredients(self, dataDf=None, column = "ingredient"):
         if not(dataDf): data = self.processed_data
         ingredients = list(self.ingredients["name"])
@@ -68,14 +79,17 @@ class Preprocessor:
         if not(dataDf): self.processed_data = data
         return data
     
+    # helperfunction to select the value of the row in a singlecolumned dataframe
     def cut_helper(self, x):   
         return x[0]
 
+    # delete empty or too short (<1) entries in the dataset
     def cut_lists(self, column = "ingredient", data=None):
         self.processed_data = self.processed_data[self.processed_data[column].str.len()==1 ]
         self.processed_data.loc[:,(column)] = self.processed_data[column].apply(self.cut_helper)
         return self.processed_data
     
+    # create the corpus from the given dataset
     def create_corpus(self, data=None):
         if not(data): data = self.processed_data[["name", "unit"]]
         corpus = []
@@ -91,6 +105,7 @@ class Preprocessor:
         self.corpus = pd.DataFrame(data=corpus, columns=["corpus"])
         return self.corpus
     
+    #create the zutatenverzeichnis from the given dataset
     def create_zutatenverzeichnis(self, data=None):
         if not(data): data = self.processed_data[["name", "unit"]]
         zutatenverzeichnis = []
@@ -105,6 +120,7 @@ class Preprocessor:
         self.zutatenverzeichnis = pd.DataFrame(data=zutatenverzeichnis, columns=["name"])
         return self.zutatenverzeichnis
 
+    # delete the signs specified in the sign_list from the given dataset
     def clear_signs(self, data, sign_list=None):
         if not(sign_list): sign_list = self.sign_list
 
@@ -122,18 +138,19 @@ class Preprocessor:
         data.apply(lambda row: stripper(row, sign_list), axis=1)
         return data 
 
+    # wrapper for deleting a column from dataframe
     def strip_column(self, column, data_in=None):
         data = self.processed_data if data_in is None else data_in 
         data = data.drop(column, axis=1)
         if data_in is None: self.processed_data = data
         return data
 
+    # helperfunction to check fpr missing attributes of the preprocessor
     def check_attributes(self):
         empty_attributes = [attribute for attribute, value in self.__dict__.items() if value is None]
         return empty_attributes        
 
-
-
+    # function to call the whole preprocessing in one task
     def preprocess(self, dataset, ingredients):  
 
         self.load_dataset(dataset)
